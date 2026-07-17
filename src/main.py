@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -6,6 +8,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 from src.utils.normalized_to_pixel import normalized_to_pixel_coordinates
+from src.features.extractor import FeatureExtractor
 
 SHOW_ALL_LANDMARKS = True
 SELECTED_LANDMARKS = [61,181,39, 267,314, 291]
@@ -18,7 +21,7 @@ options = vision.FaceLandmarkerOptions(base_options=base_options,
 detector = vision.FaceLandmarker.create_from_options(options)
 
 
-frame = cv2.imread('data/img/smile.jpg')
+frame = cv2.imread('data/img/no_smile.jpg')
 resized_img = cv2.resize(frame,(0,0),fx=2,fy=2)
 image_rgb = cv2.cvtColor(resized_img, cv2.COLOR_BGR2RGB)
 image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image_rgb)
@@ -56,11 +59,12 @@ for faces_landmarks in detection_result.face_landmarks:
                 0.5,          
                 (0, 0, 255),  
                 2)
-            
-    df = pd.DataFrame(normalized_to_pixel_landmarks)
-    df.to_csv('data/csv/landmarks.csv', index=False, encoding='utf-8')
-                
-                
+
+    Landmark = namedtuple('Landmark', ['x', 'y', 'z'])
+    landmarks_objects = [Landmark(pt['x'], pt['y'], pt['z']) for pt in normalized_to_pixel_landmarks]
+    
+    features = FeatureExtractor().extract(landmarks_objects)    
+    print("Extracted Features:", features)
                 
 rgb_annotated_image = cv2.cvtColor(image_copy, cv2.COLOR_BGR2RGB)
 cv2.imshow('frame',rgb_annotated_image)

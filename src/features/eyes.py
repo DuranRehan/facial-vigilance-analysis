@@ -1,6 +1,31 @@
 from src.utils.euclidean_distance import euclidean_distance
 
 class EyeFeatures: 
+    
+    LEFT_EYE_INDICES = [33, 160, 158, 133, 153, 144]
+    RIGHT_EYE_INDICES = [263, 385, 387, 362, 373, 380]
+    
+    def extract(self,landmarks):
+        
+        
+        left_eye = self.__eye_openness_ratio(
+           *[landmarks[k] for k in self.LEFT_EYE_INDICES]
+        )
+
+        right_eye = self.__eye_openness_ratio(
+              *[landmarks[k] for k in self.RIGHT_EYE_INDICES]
+        )
+      
+      
+      
+        average = (left_eye + right_eye) / 2
+
+        return {
+            "left_eye_ear": left_eye,
+            "right_eye_ear": right_eye,
+            "average_eyes_ear": average
+        }
+        
 
     # Based on EAR (Eye Aspect Ratio) formula
     def __eye_openness_ratio(self,p1,p2,p3,p4,p5,p6):
@@ -10,8 +35,3 @@ class EyeFeatures:
         
         return (vertical_1 + vertical_2) / (2 * horizontal)
     
-    def eye_openness_average(self,left_P1,left_P2,left_P3,left_P4,left_P5,left_P6,right_P1,right_P2,right_P3,right_P4,right_P5,right_P6):
-        left_ratio = self.__eye_openness_ratio(left_P1,left_P2,left_P3,left_P4,left_P5,left_P6)
-        right_ratio = self.__eye_openness_ratio(right_P1,right_P2,right_P3,right_P4,right_P5,right_P6)
-        
-        return (left_ratio + right_ratio) / 2
