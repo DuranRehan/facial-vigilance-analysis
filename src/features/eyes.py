@@ -1,10 +1,8 @@
 from src.utils.euclidean_distance import euclidean_distance
 
 class EyeFeatures: 
-    
     LEFT_EYE_INDICES = [33, 160, 158, 133, 153, 144]
-    RIGHT_EYE_INDICES = [263, 385, 387, 362, 373, 380]
-    
+    RIGHT_EYE_INDICES = [362, 385, 387, 263, 373, 380]
     def extract(self,landmarks):
         
         
