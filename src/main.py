@@ -10,8 +10,8 @@ from mediapipe.tasks.python import vision
 from src.utils.normalized_to_pixel import normalized_to_pixel_coordinates
 from src.features.extractor import FeatureExtractor
 
-SHOW_ALL_LANDMARKS = True
-SELECTED_LANDMARKS = [61,181,39, 267,314, 291]
+SHOW_ALL_LANDMARKS = False
+SELECTED_LANDMARKS = [33, 160, 158, 133, 153, 144, 263, 385, 387, 362, 373, 380]
 
 base_options = python.BaseOptions(model_asset_path='./models/face_landmarker.task')
 options = vision.FaceLandmarkerOptions(base_options=base_options,
@@ -63,7 +63,10 @@ for faces_landmarks in detection_result.face_landmarks:
     Landmark = namedtuple('Landmark', ['x', 'y', 'z'])
     landmarks_objects = [Landmark(pt['x'], pt['y'], pt['z']) for pt in normalized_to_pixel_landmarks]
     
-    features = FeatureExtractor().extract(landmarks_objects)    
+    Blendshape = namedtuple('Blendshape', ['category_name', 'score'])
+    blendshapes_dict = {item['category_name']: item['score'] for item in blendshape_data}
+  
+    features = FeatureExtractor().extract(landmarks_objects,blendshapes_dict)    
     print("Extracted Features:", features)
                 
 rgb_annotated_image = cv2.cvtColor(image_copy, cv2.COLOR_BGR2RGB)
