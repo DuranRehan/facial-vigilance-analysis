@@ -1,78 +1,38 @@
-from collections import namedtuple
+import sys
 
-import cv2
-import mediapipe as mp
-import numpy as np
-import pandas as pd
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
-
-from src.utils.normalized_to_pixel import normalized_to_pixel_coordinates
 from src.features.extractor import FeatureExtractor
+from src.vision.imageloader import ImageLoader
+from src.vision.detector import FaceDetector
+from src.vision.landmark_mapper import LandmarkMapper
+from src.vision.visualizer import Visualizer
 
-SHOW_ALL_LANDMARKS = False
-SELECTED_LANDMARKS = [33, 160, 158, 133, 153, 144, 263, 385, 387, 362, 373, 380]
+image = ImageLoader.load_image('data/img/no_smile.jpg')
+height, width, _ = image.shape
 
-base_options = python.BaseOptions(model_asset_path='./models/face_landmarker.task')
-options = vision.FaceLandmarkerOptions(base_options=base_options,
-                                       output_face_blendshapes=True,
-                                       output_facial_transformation_matrixes=True,
-                                       num_faces=1)
-detector = vision.FaceLandmarker.create_from_options(options)
-
-
-frame = cv2.imread('data/img/no_smile.jpg')
-resized_img = cv2.resize(frame,(0,0),fx=2,fy=2)
-image_rgb = cv2.cvtColor(resized_img, cv2.COLOR_BGR2RGB)
-image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image_rgb)
+detector = FaceDetector()
 detection_result = detector.detect(image)
-image_copy = np.copy(image.numpy_view())
-height, width,_ = image_copy.shape
+
+landmarks_matrix, raw_blendshapes = LandmarkMapper.map_to_pixel_matrix(
+    detection_result, image_width=width, image_height=height
+)
+
+extractor = FeatureExtractor()
+features = extractor.extract(landmarks_matrix, raw_blendshapes)    
 
 
+if __name__ == "__main__":
 
-for face_blendshapes in detection_result.face_blendshapes:
-    blendshape_data = []
-    for blendshape in face_blendshapes:
-        blendshape_data.append({'category_name': blendshape.category_name, 'score': blendshape.score})
-    df = pd.DataFrame(blendshape_data)
-    df.to_csv('data/csv/blendshapes.csv', index=False, encoding='utf-8') 
-
-    
-for faces_landmarks in detection_result.face_landmarks:
-    normalized_to_pixel_landmarks = []
-    
-    for idx, landmark in enumerate(faces_landmarks):
-        coords = normalized_to_pixel_coordinates(landmark.x, landmark.y, landmark.z, width, height)
-        if coords:
-          
-            normalized_to_pixel_landmarks.append({'index': idx,'x': coords[0],'y': coords[1],'z': coords[2]})
+    if "--debug" in sys.argv or "--d" in sys.argv:
+        if landmarks_matrix is None:
+            print("Aucun visage détecté dans l'image.")
+            exit()
             
-            if idx in SELECTED_LANDMARKS or SHOW_ALL_LANDMARKS:
-              cv2.circle(image_copy, (coords[0], coords[1]), 2, (0, 255, 0), -1)
-              text_coords = (coords[0] + 5, coords[1] + 5)
-              cv2.putText(
-                image_copy, 
-                str(idx), 
-                text_coords, 
-                cv2.FONT_HERSHEY_SIMPLEX, 
-                0.5,          
-                (0, 0, 255),  
-                2)
-
-    Landmark = namedtuple('Landmark', ['x', 'y', 'z'])
-    landmarks_objects = [Landmark(pt['x'], pt['y'], pt['z']) for pt in normalized_to_pixel_landmarks]
-    
-    Blendshape = namedtuple('Blendshape', ['category_name', 'score'])
-    blendshapes_dict = {item['category_name']: item['score'] for item in blendshape_data}
-  
-    features = FeatureExtractor().extract(landmarks_objects,blendshapes_dict)    
-    print("Extracted Features:", features)
-                
-rgb_annotated_image = cv2.cvtColor(image_copy, cv2.COLOR_BGR2RGB)
-cv2.imshow('frame',rgb_annotated_image)
-
-
-
-cv2.waitKey(0)    
-cv2.destroyAllWindows()
+        SHOW_ALL_LANDMARKS = False
+        SELECTED_LANDMARKS = [33, 160, 158, 133, 153, 144, 263, 385, 387, 362, 373, 380]
+        Visualizer.draw_landmarks(
+            image,
+            landmarks_matrix,
+            selected_landmarks=SELECTED_LANDMARKS, 
+            show_all=SHOW_ALL_LANDMARKS
+        )
+        Visualizer.show_image(image, window_name="Landmarks Visualization")
