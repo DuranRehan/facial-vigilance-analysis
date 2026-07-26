@@ -1,5 +1,7 @@
 import sys
 
+from src.dataset.checkin_record import CheckInRecordBuilder
+from src.dataset.csv_writer import CSVWriter
 from src.features.extractor import FeatureExtractor
 from src.vision.imageloader import ImageLoader
 from src.vision.detector import FaceDetector
@@ -18,6 +20,13 @@ landmarks_matrix, raw_blendshapes = LandmarkMapper.map_to_pixel_matrix(
 
 extractor = FeatureExtractor()
 features = extractor.extract(landmarks_matrix, raw_blendshapes)    
+
+user_mood = 3        
+record = CheckInRecordBuilder.build_record(features, mood=user_mood)           
+csv_path = "./data/csv/features.csv"
+
+writer = CSVWriter(csv_path)
+writer.append(record)
 
 
 if __name__ == "__main__":
