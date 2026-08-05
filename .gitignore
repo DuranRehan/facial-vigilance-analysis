@@ -1,5 +1,6 @@
 ### CSV ANALYTICS ###
 data/csv/*.csv
+data/img/checkin_img
 
 
 ### Python ###
