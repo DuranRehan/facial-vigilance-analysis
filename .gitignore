@@ -2,6 +2,9 @@
 data/csv/*.csv
 data/img/checkin_img
 
+### Roadmap ###
+Roadmap.md
+
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
